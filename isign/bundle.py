@@ -10,15 +10,15 @@
     See the Apple Developer Documentation "About Bundles" """
 
 import biplist
-import code_resources
-from exceptions import NotMatched
+from . import code_resources
+from .exceptions import NotMatched
 import copy
 import glob
 import logging
 import os
 from os.path import basename, exists, join, splitext
-from signer import openssl_command
-import signable
+from .signer import openssl_command
+from . import signable
 import shutil
 
 

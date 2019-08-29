@@ -5,8 +5,8 @@
 
 import abc
 import biplist
-from bundle import App, Bundle, is_info_plist_native
-from exceptions import MissingHelpers, NotSignable, NotMatched
+from .bundle import App, Bundle, is_info_plist_native
+from .exceptions import MissingHelpers, NotSignable, NotMatched
 from distutils import spawn
 import logging
 import os
@@ -14,7 +14,7 @@ from os.path import abspath, dirname, exists, isdir, isfile, join, normpath
 import tempfile
 import re
 from subprocess import call
-from signer import Signer
+from .signer import Signer
 import shutil
 import zipfile
 

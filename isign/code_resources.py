@@ -5,7 +5,7 @@ import logging
 from memoizer import memoize
 import os
 import plistlib
-from plistlib import PlistWriter
+from plistlib import _PlistWriter
 import re
 
 OUTPUT_DIRECTORY = '_CodeSignature'
@@ -22,17 +22,18 @@ log = logging.getLogger(__name__)
 # Apple's plist utils work like this:
 #   1234.5 --->  <real>1234.5</real>
 #   1234.0 --->  <real>1234</real>
-def writeValue(self, value):
+def write_value(self, value):
     if isinstance(value, float):
-        rep = repr(value)
         if value.is_integer():
             rep = repr(int(value))
-        self.simpleElement("real", rep)
+        else:
+            rep = repr(value)
+        self.simple_element("real", rep)
     else:
-        self.oldWriteValue(value)
+        self.old_write_value(value)
 
-PlistWriter.oldWriteValue = PlistWriter.writeValue
-PlistWriter.writeValue = writeValue
+_PlistWriter.old_write_value = _PlistWriter.write_value
+_PlistWriter.write_value = write_value
 
 
 # Simple reimplementation of ResourceBuilder, in the Apple Open Source
@@ -56,7 +57,7 @@ class PathRule(object):
                 # if it was true, this file is required;
                 # do nothing
             elif isinstance(properties, dict):
-                for key, value in properties.iteritems():
+                for key, value in properties.items():
                     if key == 'optional' and value is True:
                         self.flags |= PathRule.OPTIONAL
                     elif key == 'omit' and value is True:
@@ -97,7 +98,7 @@ class ResourceBuilder(object):
         self.rules = []
         self.respect_omissions = respect_omissions
         self.include_sha256 = include_sha256
-        for pattern, properties in rules_data.iteritems():
+        for pattern, properties in rules_data.items():
             self.rules.append(PathRule(pattern, properties))
 
     def find_rule(self, path):
@@ -186,8 +187,7 @@ def get_template():
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     template_path = os.path.join(current_dir, TEMPLATE_FILENAME)
-    fh = open(template_path, 'r')
-    return plistlib.readPlist(fh)
+    return plistlib.readPlist(open(template_path, 'rb'))
 
 
 @memoize
@@ -220,8 +220,7 @@ def write_plist(target_dir, plist):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     output_path = os.path.join(output_dir, OUTPUT_FILENAME)
-    fh = open(output_path, 'w')
-    plistlib.writePlist(plist, fh)
+    plistlib.writePlist(plist, open(output_path, 'wb'))
     return output_path
 
 

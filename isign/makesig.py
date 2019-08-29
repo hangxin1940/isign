@@ -7,14 +7,12 @@
 # we may need this someday, so preserving here.
 #
 
+import binascii
 import construct
 import hashlib
 import logging
 import math
-import macho
-import macho_cs
-import utils
-
+from . import macho, macho_cs, utils
 
 log = logging.getLogger(__name__)
 
@@ -67,8 +65,8 @@ def make_requirements(drs, ident, common_name):
         'And',
         ('Ident', ident),
         ('AppleGenericAnchor',),
-        ('CertField', 'leafCert', 'subject.CN', ['matchEqual', common_name]),
-        ('CertGeneric', 1, '*\x86H\x86\xf7cd\x06\x02\x01', ['matchExists']))
+        ('CertField', 'leafCert', b'subject.CN', ['matchEqual', common_name]),
+        ('CertGeneric', 1, b'*\x86H\x86\xf7cd\x06\x02\x01', ['matchExists']))
     des_req = construct.Container(kind=1, expr=expr)
     des_req_data = macho_cs.Requirement.build(des_req)
 
@@ -108,8 +106,8 @@ def make_basic_codesig(entitlements_file, drs, code_limit, hashes, signer, ident
     common_name = signer.get_common_name()
     log.debug("ident: {}".format(ident))
     log.debug("codelimit: {}".format(code_limit))
-    teamID = signer._get_team_id() + '\x00'
-    empty_hash = "\x00" * 20
+    teamID = signer._get_team_id() + b'\x00'
+    empty_hash = b"\x00" * 20
     cd = construct.Container(cd_start=None,
                              version=0x20200,
                              flags=0,
@@ -122,7 +120,7 @@ def make_basic_codesig(entitlements_file, drs, code_limit, hashes, signer, ident
                              spare1=0,
                              pageSize=12,
                              spare2=0,
-                             ident=ident + '\x00',
+                             ident=ident + b'\x00',
                              scatterOffset=0,
                              teamIDOffset=52 + len(ident) + 1,
                              teamID=teamID,
@@ -160,7 +158,7 @@ def make_basic_codesig(entitlements_file, drs, code_limit, hashes, signer, ident
                                                  offset=offset,
                                                  blob=construct.Container(magic='CSMAGIC_ENTITLEMENT',
                                                                           length=len(entitlements_bytes) + 8,
-                                                                          data="",
+                                                                          data=b"",
                                                                           bytes=entitlements_bytes
                                                                           ))
         offset += entitlements_index.blob.length
@@ -169,13 +167,15 @@ def make_basic_codesig(entitlements_file, drs, code_limit, hashes, signer, ident
                                            offset=offset,
                                            blob=construct.Container(magic='CSMAGIC_BLOBWRAPPER',
                                                                     length=0 + 8,
-                                                                    data="",
-                                                                    bytes="",
+                                                                    data=b"",
+                                                                    bytes=b"",
                                                                     ))
-    indicies = filter(None, [cd_index,
-                requirements_index,
-                entitlements_index,
-                sigwrapper_index])
+    indicies = list(filter(None, [
+        cd_index,
+        requirements_index,
+        entitlements_index,
+        sigwrapper_index
+    ]))
 
     superblob = construct.Container(
         sb_start=0,
@@ -192,6 +192,8 @@ def make_basic_codesig(entitlements_file, drs, code_limit, hashes, signer, ident
 
 
 def make_signature(arch_macho, arch_offset, arch_size, cmds, f, entitlements_file, codesig_data_length, signer, ident):
+    if isinstance(ident, str):
+        ident = ident.encode()
     # NB: arch_offset is absolute in terms of file start.  Everything else is relative to arch_offset!
 
     # sign from scratch
@@ -213,7 +215,7 @@ def make_signature(arch_macho, arch_offset, arch_size, cmds, f, entitlements_fil
 
 
     # generate placeholder LC_CODE_SIGNATURE (like what codesign_allocate does)
-    fake_hashes = ["\x00" * 20]*nCodeSlots
+    fake_hashes = [b"\x00" * 20]*nCodeSlots
 
     codesig_cons = make_basic_codesig(entitlements_file,
             drs,
@@ -275,14 +277,14 @@ def make_signature(arch_macho, arch_offset, arch_size, cmds, f, entitlements_fil
         file_slice = f.read(bytes_to_read)
         if len(file_slice) < bytes_to_read:
             log.warn("expected {} bytes but got {}, zero padding.".format(bytes_to_read, len(file_slice)))
-            file_slice += ("\x00" * (bytes_to_read - len(file_slice)))
+            file_slice += (b"\x00" * (bytes_to_read - len(file_slice)))
         actual_data += file_slice
 
-        for i in xrange(nCodeSlots):
+        for i in range(nCodeSlots):
             actual_data_slice = actual_data[(0x1000 * i):(0x1000 * i + 0x1000)]
 
             actual = hashlib.sha1(actual_data_slice).digest()
-            log.debug("Slot {} (File page @{}): {}".format(i, hex(0x1000 * i), actual.encode('hex')))
+            log.debug("Slot {} (File page @{}): {}".format(i, hex(0x1000 * i), binascii.hexlify(actual)))
             hashes.append(actual)
     else:
         hashes = fake_hashes

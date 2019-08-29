@@ -2,9 +2,7 @@ from abc import ABCMeta
 import construct
 import hashlib
 import logging
-import macho_cs
-
-import utils
+from . import macho_cs
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +35,7 @@ class ApplicationSlot(CodeDirectorySlot):
     offset = -4
 
     def get_hash(self, hash_algorithm):
-        return '\x00' * 20
+        return b'\x00' * 20
 
 
 class ResourceDirSlot(CodeDirectorySlot):
