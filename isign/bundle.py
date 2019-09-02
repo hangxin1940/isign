@@ -218,7 +218,7 @@ class App(Bundle):
         ]
         # this command always prints 'Verification successful' to stderr.
         (profile_text, err) = openssl_command(cmd, data=None, expect_err=True)
-        if err and err.strip() != 'Verification successful':
+        if err and err.strip() != b'Verification successful':
             log.error('Received unexpected error from openssl: {}'.format(err))
         plist_dict = biplist.readPlistFromString(profile_text)
         if 'Entitlements' not in plist_dict:
