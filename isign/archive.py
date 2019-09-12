@@ -15,6 +15,7 @@ import tempfile
 import re
 from subprocess import call
 from .signer import Signer
+from .utils import namelist
 import shutil
 import zipfile
 
@@ -194,7 +195,7 @@ class AppZipArchive(Archive):
     def find_bundle_dir(cls, zipfile_obj):
         relative_bundle_dir = None
         apps = set()
-        file_list = zipfile_obj.namelist()
+        file_list = namelist(zipfile_obj)
         for file_name in file_list:
             matched = re.match(cls.app_dir_pattern, file_name)
             if matched:
@@ -231,7 +232,7 @@ class AppZipArchive(Archive):
             relative_bundle_dir = cls.find_bundle_dir(zipfile_obj)
             if relative_bundle_dir is not None:
                 plist_path = cls._get_plist_path(relative_bundle_dir)
-                if plist_path not in zipfile_obj.namelist():
+                if plist_path not in namelist(zipfile_obj):
                     return False
                 plist = cls.get_info(relative_bundle_dir, zipfile_obj)
                 is_native = is_info_plist_native(plist)

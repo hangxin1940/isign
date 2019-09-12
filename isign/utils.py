@@ -15,3 +15,8 @@ def round_up(x, k):
 def print_structure(container, struct):
     actual_data = struct.build(container)
     return "{}".format(struct.parse(actual_data))
+
+
+def namelist(zf):
+    for name in zf.namelist():
+        yield name.encode('cp437').decode('utf-8')
