@@ -242,7 +242,7 @@ class AppZipArchive(Archive):
     @classmethod
     def get_info(cls, relative_bundle_dir, zipfile_obj):
         plist_path = cls._get_plist_path(relative_bundle_dir)
-        plist_bytes = zipfile_obj.read(plist_path)
+        plist_bytes = zipfile_obj.read(plist_path.encode('utf-8').decode('cp437'))
         return biplist.readPlistFromString(plist_bytes)
 
     def __init__(self, path):
