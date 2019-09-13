@@ -90,7 +90,7 @@ class Bundle(object):
                     url_type['CFBundleURLName'] = new_bundle_id
                     changed = True
 
-        for key, val in new_props.iteritems():
+        for key, val in new_props.items():
             is_new_key = key not in self.info
             if is_new_key or self.info[key] != val:
                 if is_new_key:
