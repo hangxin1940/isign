@@ -110,9 +110,7 @@ class Bundle(object):
         if not self.orig_info:
             # No props have been changed
             return False
-        if key in self.info and key in self.orig_info and self.info[key] == self.orig_info[key]:
-            return False
-        return True
+        return key in self.info
 
     def get_info_prop(self, key):
         return self.info[key]
