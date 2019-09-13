@@ -259,3 +259,8 @@ MachoFile = Struct("MachoFile",
                                                              0xc10cdefa: Blob,
                                                              })
                    )
+
+
+if __name__ == '__main__':
+    import sys
+    print(MachoFile.parse_stream(open(sys.argv[1], 'rb')))
