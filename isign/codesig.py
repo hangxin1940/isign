@@ -142,7 +142,7 @@ class Codesig(object):
             # Set the bundle id if it changed
             try:
                 bundle_struct = req_blob_0.data.expr.data[0].data
-                bundle_struct.data = self.signable.get_changed_bundle_id()
+                bundle_struct.data = self.signable.get_changed_bundle_id().encode()
                 bundle_struct.length = len(bundle_struct.data)
             except Exception:
                 log.debug("could not set bundle id")
@@ -226,7 +226,7 @@ class Codesig(object):
 
             if changed_bundle_id:
                 offset_change = len(changed_bundle_id) - len(code_directory.data.ident)
-                code_directory.data.ident = changed_bundle_id
+                code_directory.data.ident = changed_bundle_id.encode()
                 code_directory.data.hashOffset += offset_change
                 if code_directory.data.teamIDOffset == None:
                     code_directory.data.teamIDOffset = offset_change

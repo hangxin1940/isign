@@ -46,12 +46,12 @@ class Bundle(object):
         if not exists(self.info_path):
             raise NotMatched("no Info.plist found; probably not a bundle")
         self.info = biplist.readPlist(self.info_path)
-        self.orig_info = None
         if not is_info_plist_native(self.info):
             # while we should probably not allow this *or* add it ourselves, it appears to work without it
             log.debug(u"Missing/invalid CFBundleSupportedPlatforms value in {}".format(self.info_path))
         # will be added later
         self.seal_path = None
+        self.new_props = {}
 
     def get_entitlements_path(self):
         return self.entitlements_path
@@ -71,9 +71,6 @@ class Bundle(object):
         return executable
 
     def update_info_props(self, new_props):
-        if self.orig_info is None:
-            self.orig_info = copy.deepcopy(self.info)
-
         changed = False
         if ('CFBundleIdentifier' in new_props and
                 'CFBundleURLTypes' in self.info and
@@ -100,19 +97,14 @@ class Bundle(object):
 
         if changed:
             biplist.writePlist(self.info, self.info_path, binary=True)
-        else:
-            self.orig_info = None
+
+        self.new_props.update(new_props)
 
     def info_props_changed(self):
-        return self.orig_info is not None
+        return self.new_props
 
     def info_prop_changed(self, key):
-        if not self.orig_info:
-            # No props have been changed
-            return False
-        if key in self.info and key in self.orig_info and self.info[key] == self.orig_info[key]:
-            return False
-        return True
+        return key in self.new_props
 
     def get_info_prop(self, key):
         return self.info[key]
